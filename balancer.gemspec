@@ -8,9 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Balancer::VERSION
   spec.authors       = ["Tung Nguyen"]
   spec.email         = ["tongueroo@gmail.com"]
-  spec.summary       = "Generated with cli-template tool. Please write a gem summary"
-  spec.description   = "Generated with cli-template tool. Write a longer description or delete this line."
-  spec.homepage      = ""
+  spec.summary       = "Balancer tool"
+  spec.homepage      = "https://github.com/tongueroo/balancer"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
