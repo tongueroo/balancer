@@ -5,7 +5,7 @@ module Balancer
   autoload :Help, "balancer/help"
   autoload :Command, "balancer/command"
   autoload :CLI, "balancer/cli"
-  autoload :Sub, "balancer/sub"
+  autoload :Create, "balancer/create"
   autoload :Completion, "balancer/completion"
   autoload :Completer, "balancer/completer"
 end

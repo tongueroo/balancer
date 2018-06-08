@@ -3,17 +3,11 @@ module Balancer
     class_option :verbose, type: :boolean
     class_option :noop, type: :boolean
 
-    desc "hello NAME", "Say hello to NAME."
-    long_desc Help.text(:hello)
-    option :from, desc: "from person"
-    def hello(name="you")
-      puts "from: #{options[:from]}" if options[:from]
-      puts "Hello #{name}"
+    desc "create NAME", "Create Load Balancer."
+    long_desc Help.text(:create)
+    def create(name)
+      Create.new(options.merge(name: name)).run
     end
-
-    desc "sub SUBCOMMAND", "sub subcommands"
-    long_desc Help.text(:sub)
-    subcommand "sub", Sub
 
     desc "completion *PARAMS", "Prints words for auto-completion."
     long_desc Help.text("completion")
