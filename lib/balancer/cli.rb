@@ -5,6 +5,12 @@ module Balancer
 
     desc "create NAME", "Create Load Balancer."
     long_desc Help.text(:create)
+    # create_load_balancer options
+    option :subnets, type: :array, desc: "Subnets"
+    option :security_groups, type: :array, desc: "Security groups"
+    # create_target_group options
+    option :vpc_id, type: :array, desc: "Vpc id"
+    option :target_group_name, desc: "Target group name"
     def create(name)
       Create.new(options.merge(name: name)).run
     end
