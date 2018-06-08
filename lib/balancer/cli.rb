@@ -15,6 +15,12 @@ module Balancer
       Create.new(options.merge(name: name)).run
     end
 
+    desc "destroy NAME", "Destroy Load Balancer and associated target group."
+    long_desc Help.text(:destroy)
+    def destroy(name)
+      Destroy.new(options.merge(name: name)).run
+    end
+
     desc "completion *PARAMS", "Prints words for auto-completion."
     long_desc Help.text("completion")
     def completion(*params)

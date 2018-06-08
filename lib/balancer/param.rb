@@ -11,13 +11,14 @@ module Balancer
       params = merge_option(params, :name)
       params = merge_option(params, :subnets)
       params = merge_option(params, :security_groups)
+      params[:tags] = [{ key: "balancer", value: "balancer" }]
       params
     end
     memoize :create_load_balancer
 
     def create_target_group
       params = settings["create_target_group"].deep_symbolize_keys
-      params = merge_option(params, :target_group_name)
+      params[:name] ||= @options[:name] if @options[:name] # settings take precedence
       params = merge_option(params, :vpc_id)
       params
     end

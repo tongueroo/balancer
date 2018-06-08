@@ -15,6 +15,7 @@ module Balancer
   autoload :Create, "balancer/create"
   autoload :Completion, "balancer/completion"
   autoload :Completer, "balancer/completer"
+  autoload :Destroy, "balancer/destroy"
   autoload :Param, "balancer/param"
 
   extend Core

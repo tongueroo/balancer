@@ -27,8 +27,9 @@ module Balancer
 
       resp = elb.create_load_balancer(params)
       elb = resp.load_balancers.first
-      puts "Load balancer created: #{elb.load_balancer_arn}\n\n"
+      puts "Load balancer created: #{elb.load_balancer_arn}"
       @load_balancer_arn = elb.load_balancer_arn # used later
+      puts
     end
 
     def create_target_group
@@ -41,8 +42,10 @@ module Balancer
 
       resp = elb.create_target_group(params)
       target_group = resp.target_groups.first
-      puts "Target group created: #{target_group.target_group_arn}\n\n"
+      puts "Target group created: #{target_group.target_group_arn}"
       @target_group_arn = target_group.target_group_arn # used later
+      add_tags(@target_group_arn)
+      puts
     end
 
     def create_listener
@@ -59,7 +62,18 @@ module Balancer
 
       resp = elb.create_listener(params)
       listener = resp.listeners.first
-      puts "Listener created: #{listener.listener_arn}\n\n"
+      puts "Listener created: #{listener.listener_arn}"
+      puts
+    end
+
+    def add_tags(arn)
+      resources = [arn]
+      elb.add_tags(
+        resource_arns: resources,
+        tags: [{ key: "balancer", value: "balancer" }]
+      )
+      puts "Equivalent aws cli command:"
+      puts %Q|  aws elbv2 add-tags --resource-arns #{resources.join(' ')} --tags "Key=balancer,Value=balancer"|.colorize(:light_green)
     end
 
     def param
