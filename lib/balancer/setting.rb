@@ -34,7 +34,7 @@ module Balancer
     # Any empty file will result in "false".  Lets ensure that an empty file
     # loads an empty hash instead.
     def yaml_file(path)
-      puts "yaml_file #{path}"
+      # puts "yaml_file #{path}"
       return {} unless File.exist?(path)
       YAML.load_file(path) || {}
     end

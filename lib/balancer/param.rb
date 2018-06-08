@@ -23,6 +23,11 @@ module Balancer
     end
     memoize :create_target_group
 
+    def create_listener
+      settings["create_listener"].deep_symbolize_keys
+    end
+    memoize :create_listener
+
     def merge_option(params, option_key)
       params[option_key] = @options[option_key] if @options[option_key]
       params

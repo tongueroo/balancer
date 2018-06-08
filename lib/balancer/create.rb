@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Balancer
   class Create
     include AwsService
@@ -12,42 +14,62 @@ module Balancer
     def run
       create_elb
       create_target_group
+      create_listener
     end
 
     def create_elb
-      puts "Creating load balancer: #{@name}"
-
+      puts "Creating load balancer with params:"
       params = param.create_load_balancer
-      puts "params:"
-      pp params
+      pretty_display(params)
 
       puts "Equivalent aws cli command:"
       puts "  aws elbv2 create-load-balancer --name #{@name} --subnets #{params[:subnets].join(' ')} --security-groups #{params[:security_groups].join(' ')}".colorize(:light_green)
 
       resp = elb.create_load_balancer(params)
       elb = resp.load_balancers.first
-      puts "Load balancer created: #{elb.load_balancer_arn}"
+      puts "Load balancer created: #{elb.load_balancer_arn}\n\n"
+      @load_balancer_arn = elb.load_balancer_arn # used later
     end
 
-    # aws elbv2 create-target-group --name my-targets --protocol HTTP --port 80 --vpc-id vpc-12345678
     def create_target_group
-      puts "Creating target group"
-
+      puts "Creating target group with params:"
       params = param.create_target_group
-      puts "params:"
-      pp params
+      pretty_display(params)
 
       puts "Equivalent aws cli command:"
       puts "  aws elbv2 create-target-group --name #{params[:name]} --protocol #{params[:protocol]} --port #{params[:port]} --vpc-id #{params[:vpc_id]}".colorize(:light_green)
 
       resp = elb.create_target_group(params)
       target_group = resp.target_groups.first
-      puts "Target group created: #{target_group.target_group_arn}"
+      puts "Target group created: #{target_group.target_group_arn}\n\n"
+      @target_group_arn = target_group.target_group_arn # used later
+    end
+
+    def create_listener
+      puts "Creating listener with params:"
+      params = param.create_listener
+      params.merge!(
+        load_balancer_arn: @load_balancer_arn,
+        default_actions: [{type: "forward", target_group_arn: @target_group_arn}]
+      )
+      pretty_display(params)
+
+      puts "Equivalent aws cli command:"
+      puts "  aws elbv2 create-listener --load-balancer-arn #{params[:load_balancer_arn]} --protocol #{params[:protocol]} --port #{params[:port]} --default-actions Type=forward,TargetGroupArn=#{@target_group_arn}".colorize(:light_green)
+
+      resp = elb.create_listener(params)
+      listener = resp.listeners.first
+      puts "Listener created: #{listener.listener_arn}\n\n"
     end
 
     def param
       Param.new(@options)
     end
     memoize :param
+
+    def pretty_display(data)
+      data = data.deep_stringify_keys
+      puts YAML.dump(data)
+    end
   end
 end
