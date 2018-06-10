@@ -9,6 +9,7 @@ module Balancer
   autoload :Setting, "balancer/setting"
   autoload :Base, "balancer/base"
   autoload :Profile, "balancer/profile"
+  autoload :Init, "balancer/init"
   autoload :Core, "balancer/core"
   autoload :Command, "balancer/command"
   autoload :CLI, "balancer/cli"

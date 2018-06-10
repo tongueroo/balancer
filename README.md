@@ -2,31 +2,46 @@
 
 [![Gem Version](https://badge.fury.io/rb/GEMNAME.png)](http://badge.fury.io/rb/GEMNAME)
 [![CircleCI](https://circleci.com/gh/USER/REPO.svg?style=svg)](https://circleci.com/gh/USER/REPO)
-[![Dependency Status](https://gemnasium.com/USER/REPO.png)](https://gemnasium.com/USER/REPO)
-[![Coverage Status](https://coveralls.io/repos/USER/REPO/badge.png)](https://coveralls.io/r/USER/REPO)
-[![Join the chat at https://gitter.im/USER/REPO](https://badges.gitter.im/USER/REPO.svg)](https://gitter.im/USER/REPO?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Support](https://img.shields.io/badge/get-support-blue.svg)](https://boltops.com?utm_source=badge&utm_medium=badge&utm_campaign=cli-template)
+[![Support](https://img.shields.io/badge/get-support-blue.svg)](https://boltops.com?utm_source=badge&utm_medium=badge&utm_campaign=balancer)
 
-TODO: Write a gem description
+Tool to create ELB load balancers with a target group and listener.
 
 ## Usage
 
-    balancer hello yourname
-    balancer sub:goodbye yourname
+Quick start to creating a load balancer.
 
-The CLI tool also detects and tasks in the current folder's Rakefile and delegate to those tasks.
+	cd project
+	balancer init --vpc-id vpc-123 --subnets subnet-123 subnet-456 --security-groups sg-123
+	# edit .balancer/profiles/default.yml to your needs
+	balancer create my-elb
+
+### Profiles
+
+Balancer has a the concept of profiles.  Profiles have some preconfigured settings like subnets and vpc_id that can be set so you do not have to type it over and over.  The profile files are the parameters that passed to the corresponding aws-sdk api calls.
+
+```yaml
+---
+create_load_balancer:
+  subnets: # required
+    - subnet-123
+    - subnet-345
+  security_groups: # normally required, but optional thanks to the automatically created security group
+    - sg-123 # additional security groups to automatically created one
+create_target_group:
+  # vpc_id is required
+  vpc_id: vpc-123
+  # name: ... # automatically named, matches the load balancer name. override here
+  protocol: HTTP # required
+  port: 80 # required
+create_listener:
+  protocol: HTTP # required
+```
+
+### Security Groups
+
+One automatically created security group is associated load balancer.  You can add own additional security groups by configuring the security_groups parameter in the profile file.
 
 ## Installation
-
-Add this line to your application's Gemfile:
-
-    gem "balancer"
-
-And then execute:
-
-    bundle
-
-Or install it yourself as:
 
     gem install balancer
 

@@ -21,6 +21,12 @@ module Balancer
       Destroy.new(options.merge(name: name)).run
     end
 
+    long_desc Help.text(:init)
+    Init.cli_options.each do |args|
+      option *args
+    end
+    register(Init, "init", "init", "Sets up balancer for project")
+
     desc "completion *PARAMS", "Prints words for auto-completion."
     long_desc Help.text("completion")
     def completion(*params)

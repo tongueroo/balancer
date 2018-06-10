@@ -12,7 +12,11 @@ module Balancer
 
     # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html
     def run
-      create_elb
+      created = create_elb
+      unless created
+        puts "Load balancer #{@name} already exists"
+        return
+      end
       create_target_group
       create_listener
     end
@@ -23,9 +27,18 @@ module Balancer
       pretty_display(params)
 
       puts "Equivalent aws cli command:"
-      puts "  aws elbv2 create-load-balancer --name #{@name} --subnets #{params[:subnets].join(' ')} --security-groups #{params[:security_groups].join(' ')}".colorize(:light_green)
+      puts "  aws elbv2 create-load-balancer --name #{@name} --subnets #{params[:subnets].join(' ')} --security-groups #{params[:security_groups].join(' ')}".colorize(:light_blue)
 
-      resp = elb.create_load_balancer(params)
+      begin
+        resp = elb.create_load_balancer(params)
+      rescue Aws::ElasticLoadBalancingV2::Errors::DuplicateLoadBalancerName => e
+        puts "#{e.class}: #{e.message}" if ENV['DEBUG']
+        return false
+      rescue Exception => e
+        puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
+        exit 1
+      end
+
       elb = resp.load_balancers.first
       puts "Load balancer created: #{elb.load_balancer_arn}"
       @load_balancer_arn = elb.load_balancer_arn # used later
@@ -38,9 +51,14 @@ module Balancer
       pretty_display(params)
 
       puts "Equivalent aws cli command:"
-      puts "  aws elbv2 create-target-group --name #{params[:name]} --protocol #{params[:protocol]} --port #{params[:port]} --vpc-id #{params[:vpc_id]}".colorize(:light_green)
+      puts "  aws elbv2 create-target-group --name #{params[:name]} --protocol #{params[:protocol]} --port #{params[:port]} --vpc-id #{params[:vpc_id]}".colorize(:light_blue)
 
-      resp = elb.create_target_group(params)
+      begin
+        resp = elb.create_target_group(params)
+      rescue Exception => e
+        puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
+        exit 1
+      end
       target_group = resp.target_groups.first
       puts "Target group created: #{target_group.target_group_arn}"
       @target_group_arn = target_group.target_group_arn # used later
@@ -58,12 +76,21 @@ module Balancer
       pretty_display(params)
 
       puts "Equivalent aws cli command:"
-      puts "  aws elbv2 create-listener --load-balancer-arn #{params[:load_balancer_arn]} --protocol #{params[:protocol]} --port #{params[:port]} --default-actions Type=forward,TargetGroupArn=#{@target_group_arn}".colorize(:light_green)
+      puts "  aws elbv2 create-listener --load-balancer-arn #{params[:load_balancer_arn]} --protocol #{params[:protocol]} --port #{params[:port]} --default-actions Type=forward,TargetGroupArn=#{@target_group_arn}".colorize(:light_blue)
 
-      resp = elb.create_listener(params)
+      resp = run_with_error_handling do
+        elb.create_listener(params)
+      end
       listener = resp.listeners.first
       puts "Listener created: #{listener.listener_arn}"
       puts
+    end
+
+    def run_with_error_handling
+      yield
+    rescue Exception => e
+      puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
+      exit 1
     end
 
     def add_tags(arn)
@@ -73,7 +100,7 @@ module Balancer
         tags: [{ key: "balancer", value: "balancer" }]
       )
       puts "Equivalent aws cli command:"
-      puts %Q|  aws elbv2 add-tags --resource-arns #{resources.join(' ')} --tags "Key=balancer,Value=balancer"|.colorize(:light_green)
+      puts %Q|  aws elbv2 add-tags --resource-arns #{resources.join(' ')} --tags "Key=balancer,Value=balancer"|.colorize(:light_blue)
     end
 
     def param

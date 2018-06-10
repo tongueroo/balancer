@@ -37,7 +37,6 @@ module Balancer
         puts "Deleted target group: #{group.target_group_arn}"
       end
 
-
       resp = elb.delete_load_balancer(
         load_balancer_arn: load_balancer.load_balancer_arn,
       )

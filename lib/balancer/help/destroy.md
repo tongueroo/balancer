@@ -1,0 +1,3 @@
+## Examples
+
+    balancer destroy NAME
