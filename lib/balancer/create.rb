@@ -26,9 +26,7 @@ module Balancer
       params = param.create_load_balancer
       pretty_display(params)
 
-      puts "Equivalent aws cli command:"
-      puts "  aws elbv2 create-load-balancer --name #{@name} --subnets #{params[:subnets].join(' ')} --security-groups #{params[:security_groups].join(' ')}".colorize(:light_blue)
-
+      aws_cli_command("aws elbv2 create-load-balancer", params)
       return if @options[:noop]
 
       begin
@@ -45,6 +43,7 @@ module Balancer
       puts "Load balancer created: #{elb.load_balancer_arn}"
       @load_balancer_arn = elb.load_balancer_arn # used later
       puts
+      true
     end
 
     def create_target_group
@@ -52,8 +51,7 @@ module Balancer
       params = param.create_target_group
       pretty_display(params)
 
-      puts "Equivalent aws cli command:"
-      puts "  aws elbv2 create-target-group --name #{params[:name]} --protocol #{params[:protocol]} --port #{params[:port]} --vpc-id #{params[:vpc_id]}".colorize(:light_blue)
+      aws_cli_command("aws elbv2 create-target-group", params)
 
       begin
         resp = elb.create_target_group(params)
@@ -77,8 +75,7 @@ module Balancer
       )
       pretty_display(params)
 
-      puts "Equivalent aws cli command:"
-      puts "  aws elbv2 create-listener --load-balancer-arn #{params[:load_balancer_arn]} --protocol #{params[:protocol]} --port #{params[:port]} --default-actions Type=forward,TargetGroupArn=#{@target_group_arn}".colorize(:light_blue)
+      aws_cli_command("aws elbv2 create-listener", params)
 
       resp = run_with_error_handling do
         elb.create_listener(params)
@@ -96,13 +93,12 @@ module Balancer
     end
 
     def add_tags(arn)
-      resources = [arn]
-      elb.add_tags(
-        resource_arns: resources,
-        tags: [{ key: "balancer", value: "balancer" }]
-      )
-      puts "Equivalent aws cli command:"
-      puts %Q|  aws elbv2 add-tags --resource-arns #{resources.join(' ')} --tags "Key=balancer,Value=balancer"|.colorize(:light_blue)
+      params = {
+        resource_arns: [arn],
+        tags: [{ key: "balancer", value: @name }]
+      }
+      elb.add_tags(params)
+      aws_cli_command("aws elbv2 add-tags", params)
     end
 
     def param
@@ -113,6 +109,17 @@ module Balancer
     def pretty_display(data)
       data = data.deep_stringify_keys
       puts YAML.dump(data)
+    end
+
+    def option_transformer
+      Balancer::OptionTransformer.new
+    end
+    memoize :option_transformer
+
+    def aws_cli_command(aws_command, params)
+      puts "Equivalent aws cli command:"
+      cli_options = option_transformer.to_cli(params)
+      puts "  #{aws_command} #{cli_options}".colorize(:light_blue)
     end
   end
 end

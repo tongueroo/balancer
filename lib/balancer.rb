@@ -18,6 +18,7 @@ module Balancer
   autoload :Completer, "balancer/completer"
   autoload :Destroy, "balancer/destroy"
   autoload :Param, "balancer/param"
+  autoload :OptionTransformer, "balancer/option_transformer"
 
   extend Core
 end

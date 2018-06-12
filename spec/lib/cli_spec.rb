@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe Balancer::CLI do
   before(:all) do
     @args = "--noop"
