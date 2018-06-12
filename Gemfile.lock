@@ -5,6 +5,7 @@ PATH
       activesupport
       aws-sdk-elasticloadbalancingv2
       colorize
+      memoist
       thor
 
 GEM
@@ -15,12 +16,14 @@ GEM
       i18n (>= 0.7, < 2)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
-    aws-partitions (1.84.0)
-    aws-sdk-core (3.20.2)
+    aws-eventstream (1.0.0)
+    aws-partitions (1.91.0)
+    aws-sdk-core (3.21.2)
+      aws-eventstream (~> 1.0)
       aws-partitions (~> 1.0)
       aws-sigv4 (~> 1.0)
       jmespath (~> 1.0)
-    aws-sdk-elasticloadbalancingv2 (1.8.0)
+    aws-sdk-elasticloadbalancingv2 (1.9.0)
       aws-sdk-core (~> 3)
       aws-sigv4 (~> 1.0)
     aws-sigv4 (1.0.2)
@@ -36,6 +39,7 @@ GEM
       concurrent-ruby (~> 1.0)
     jmespath (1.4.0)
     json (2.1.0)
+    memoist (0.16.0)
     minitest (5.11.3)
     rake (12.3.0)
     rspec (3.7.0)
