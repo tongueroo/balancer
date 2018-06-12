@@ -6,7 +6,7 @@ create_load_balancer:
 <% options[:subnets].each do |subnet| -%>
     - <%= subnet %>
 <% end -%>
-  security_groups: # required
+  security_groups: # optional thanks to the automatically created security
 <% options[:security_groups].each do |security_group| -%>
     - <%= security_group %>
 <% end -%>
