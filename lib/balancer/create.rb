@@ -25,7 +25,6 @@ module Balancer
       puts "Creating load balancer with params:"
       params = param.create_load_balancer
       pretty_display(params)
-
       aws_cli_command("aws elbv2 create-load-balancer", params)
       return if @options[:noop]
 
@@ -50,7 +49,6 @@ module Balancer
       puts "Creating target group with params:"
       params = param.create_target_group
       pretty_display(params)
-
       aws_cli_command("aws elbv2 create-target-group", params)
 
       begin
@@ -74,7 +72,6 @@ module Balancer
         default_actions: [{type: "forward", target_group_arn: @target_group_arn}]
       )
       pretty_display(params)
-
       aws_cli_command("aws elbv2 create-listener", params)
 
       resp = run_with_error_handling do
@@ -97,8 +94,8 @@ module Balancer
         resource_arns: [arn],
         tags: [{ key: "balancer", value: @name }]
       }
-      elb.add_tags(params)
       aws_cli_command("aws elbv2 add-tags", params)
+      elb.add_tags(params)
     end
 
     def param
