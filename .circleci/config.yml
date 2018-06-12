@@ -56,11 +56,11 @@ jobs:
             mkdir /tmp/test-results
             bundle exec rspec
 
-      - run:
-          name: commit cli reference docs
-          command: |
-            chmod a+x -R .circleci/bin
-            .circleci/bin/commit_docs.sh
+      # - run:
+      #     name: commit cli reference docs
+      #     command: |
+      #       chmod a+x -R .circleci/bin
+      #       .circleci/bin/commit_docs.sh
 
       # collect reports
       - store_test_results:
