@@ -2,31 +2,24 @@ require "spec_helper"
 
 describe Balancer::CLI do
   before(:all) do
-    @args = "--from Tung"
+    @args = "--noop"
   end
 
   describe "balancer" do
-    it "hello" do
-      out = execute("exe/balancer hello world #{@args}")
-      expect(out).to include("from: Tung\nHello world")
+    it "create" do
+      out = execute("exe/balancer create my-elb #{@args}")
+      expect(out).to include("Creating load balancer")
     end
 
-    it "goodbye" do
-      out = execute("exe/balancer sub goodbye world #{@args}")
-      expect(out).to include("from: Tung\nGoodbye world")
+    it "destroy" do
+      out = execute("exe/balancer destroy my-elb #{@args}")
+      expect(out).to include("Destroying ELB")
     end
 
     commands = {
-      "hell" => "hello",
-      "hello" => "name",
-      "hello -" =>  "--from",
-      "hello name" => "--from",
-      "hello name --" => "--from",
-      "sub goodb" => "goodbye",
-      "sub goodbye" => "name",
-      "sub goodbye name" => "--from",
-      "sub goodbye name --" => "--from",
-      "sub goodbye name --from" => "--help",
+      "crea" => "create",
+      "create" => "name",
+      "dest" =>  "destroy",
     }
     commands.each do |command, expected_word|
       it "completion #{command}" do

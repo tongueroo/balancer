@@ -1,5 +1,7 @@
 ENV["TEST"] = "1"
 
+ENV["BALANCER_ROOT"] = "spec/fixtures/project"
+
 # CodeClimate test coverage: https://docs.codeclimate.com/docs/configuring-test-coverage
 # require 'simplecov'
 # SimpleCov.start

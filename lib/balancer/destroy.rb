@@ -9,6 +9,7 @@ module Balancer
 
     def run
       puts "Destroying ELB and target groups associated with: #{@name}"
+      return if @options[:noop]
 
       begin
         resp = elb.describe_load_balancers(names: [@name])

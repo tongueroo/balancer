@@ -1,0 +1,16 @@
+---
+create_load_balancer:
+  subnets: # required
+    - subnet-aaa
+    - subnet-bbb
+  security_groups: # required
+    - sg-123
+create_target_group:
+  # vpc_id is required
+  vpc_id: vpc-123
+  # name: ... # automatically named, matches the load balancer name. override here
+  protocol: HTTP # required
+  port: 80 # required
+create_listener:
+  protocol: HTTP # required
+  port: 80 # required

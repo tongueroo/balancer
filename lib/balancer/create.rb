@@ -29,6 +29,8 @@ module Balancer
       puts "Equivalent aws cli command:"
       puts "  aws elbv2 create-load-balancer --name #{@name} --subnets #{params[:subnets].join(' ')} --security-groups #{params[:security_groups].join(' ')}".colorize(:light_blue)
 
+      return if @options[:noop]
+
       begin
         resp = elb.create_load_balancer(params)
       rescue Aws::ElasticLoadBalancingV2::Errors::DuplicateLoadBalancerName => e

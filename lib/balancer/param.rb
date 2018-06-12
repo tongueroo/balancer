@@ -1,3 +1,5 @@
+require 'active_support/core_ext/hash'
+
 module Balancer
   class Param
     extend Memoist

@@ -2,7 +2,7 @@
 # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/ElasticLoadBalancingV2/Client.html
 # The keys correspond to methods called in the aws-sdk
 create_load_balancer:
-  subnets: # required
+  subnets: # at least 2 subnets required
 <% options[:subnets].each do |subnet| -%>
     - <%= subnet %>
 <% end -%>

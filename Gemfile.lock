@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    balancer (0.1.0)
+    balancer (0.2.0)
       activesupport
       aws-sdk-elasticloadbalancingv2
       colorize
