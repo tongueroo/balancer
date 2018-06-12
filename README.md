@@ -3,7 +3,7 @@
 [![Gem Version](https://badge.fury.io/rb/balancer.svg)](https://badge.fury.io/rb/balancer)
 [![CircleCI](https://circleci.com/gh/tongueroo/balancer.svg?style=svg)](https://circleci.com/gh/tongueroo/balancer)[![Support](https://img.shields.io/badge/get-support-blue.svg)](https://boltops.com?utm_source=badge&utm_medium=badge&utm_campaign=balancer)
 
-Tool to create ELB load balancers with a target group and listener.  It's performs similar steps to this AWS tutorial: [Tutorial: Create an Application Load Balancer Using the AWS CLI
+Tool to create ELB load balancers with a target group and listener.  It's performs similar steps to this AWS Tutorial: [Create an Application Load Balancer Using the AWS CLI
 ](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html)
 
 ## Usage
