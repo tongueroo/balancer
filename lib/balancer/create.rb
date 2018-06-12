@@ -2,8 +2,11 @@ require 'yaml'
 
 module Balancer
   class Create
-    include AwsService
+    autoload :SecurityGroup, "balancer/create/security_group"
+
     extend Memoist
+    include AwsService
+    include SecurityGroup
 
     def initialize(options)
       @options = options
@@ -12,27 +15,38 @@ module Balancer
 
     # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html
     def run
-      created = create_elb
-      unless created
+      if elb_exists?
         puts "Load balancer #{@name} already exists"
         return
       end
+
+      @security_group_id = create_security_group
+      create_elb
       create_target_group
       create_listener
+    end
+
+    def elb_exists?
+      begin
+        resp = elb.describe_load_balancers(names: [@name])
+        true
+      rescue Aws::ElasticLoadBalancingV2::Errors::LoadBalancerNotFound
+        false
+      end
     end
 
     def create_elb
       puts "Creating load balancer with params:"
       params = param.create_load_balancer
+      params[:security_groups] ||= []
+      params[:security_groups] += [@security_group_id]
+      params[:security_groups] = params[:security_groups].uniq
       pretty_display(params)
       aws_cli_command("aws elbv2 create-load-balancer", params)
       return if @options[:noop]
 
       begin
         resp = elb.create_load_balancer(params)
-      rescue Aws::ElasticLoadBalancingV2::Errors::DuplicateLoadBalancerName => e
-        puts "#{e.class}: #{e.message}" if ENV['DEBUG']
-        return false
       rescue Exception => e
         puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
         exit 1
@@ -42,7 +56,6 @@ module Balancer
       puts "Load balancer created: #{elb.load_balancer_arn}"
       @load_balancer_arn = elb.load_balancer_arn # used later
       puts
-      true
     end
 
     def create_target_group

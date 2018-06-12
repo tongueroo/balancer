@@ -11,6 +11,8 @@ module Balancer
     # create_target_group options
     option :vpc_id, type: :array, desc: "Vpc id"
     option :target_group_name, desc: "Target group name"
+    # security_group options
+    option :sg_cidr, default: "0.0.0.0/0", desc: "Security group cidr range"
     def create(name)
       Create.new(options.merge(name: name)).run
     end

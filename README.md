@@ -39,7 +39,9 @@ create_listener:
 
 ### Security Groups
 
-Balancer automatically creates a security group.  You can add own additional security groups by configuring the security_groups parameter in the profile file.
+Balancer automatically creates a security group by the same name as the elb and opens up the port configured on the listener.  To disable this behavior, use the `--no-security-group` optional.  If you use this option, you must specify you own security group in the profile file.
+
+Note, this security group is left behind if you destroy load balancer with `balancer destroy`.
 
 ## Installation
 

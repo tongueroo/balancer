@@ -24,6 +24,7 @@ module Balancer
           list = v.first.is_a?(Hash) ? values.join(',') : values.join(' ')
           params << key_to_cli_option(k) + ' ' + list
         else
+          puts "v.class: #{v.class.inspect}"
           raise "the roof"
         end
       end
