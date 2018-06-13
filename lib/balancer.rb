@@ -19,6 +19,7 @@ module Balancer
   autoload :Destroy, "balancer/destroy"
   autoload :Param, "balancer/param"
   autoload :OptionTransformer, "balancer/option_transformer"
+  autoload :SecurityGroup, "balancer/security_group"
 
   extend Core
 end

@@ -1,6 +1,8 @@
 module Balancer
   class Destroy
+    extend Memoist
     include AwsService
+    include SecurityGroup
 
     def initialize(options)
       @options = options
@@ -42,6 +44,8 @@ module Balancer
         load_balancer_arn: load_balancer.load_balancer_arn,
       )
       puts "Deleted load balancer: #{load_balancer.load_balancer_arn}"
+
+      destroy_security_group
     end
   end
 end

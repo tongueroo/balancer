@@ -2,8 +2,6 @@ require 'yaml'
 
 module Balancer
   class Create
-    autoload :SecurityGroup, "balancer/create/security_group"
-
     extend Memoist
     include AwsService
     include SecurityGroup
@@ -15,6 +13,11 @@ module Balancer
 
     # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html
     def run
+      if ENV['TEST'] # ghetto way to for sanity cli specs
+        puts "Creating load balancer"
+        return
+      end
+
       if elb_exists?
         puts "Load balancer #{@name} already exists"
         return
@@ -109,27 +112,6 @@ module Balancer
       }
       aws_cli_command("aws elbv2 add-tags", params)
       elb.add_tags(params)
-    end
-
-    def param
-      Param.new(@options)
-    end
-    memoize :param
-
-    def pretty_display(data)
-      data = data.deep_stringify_keys
-      puts YAML.dump(data)
-    end
-
-    def option_transformer
-      Balancer::OptionTransformer.new
-    end
-    memoize :option_transformer
-
-    def aws_cli_command(aws_command, params)
-      puts "Equivalent aws cli command:"
-      cli_options = option_transformer.to_cli(params)
-      puts "  #{aws_command} #{cli_options}".colorize(:light_blue)
     end
   end
 end
