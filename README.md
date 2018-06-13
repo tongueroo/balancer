@@ -3,15 +3,17 @@
 [![Gem Version](https://badge.fury.io/rb/balancer.svg)](https://badge.fury.io/rb/balancer)
 [![CircleCI](https://circleci.com/gh/tongueroo/balancer.svg?style=svg)](https://circleci.com/gh/tongueroo/balancer)[![Support](https://img.shields.io/badge/get-support-blue.svg)](https://boltops.com?utm_source=badge&utm_medium=badge&utm_campaign=balancer)
 
-Tool to create ELB load balancers with a target group and listener.  It's performs similar steps to this AWS Tutorial: [Create an Application Load Balancer Using the AWS CLI
-](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html)
+Tool to create ELB load balancers with the appropriate target group, listener, and security group.
+
+Usually, when creating ELBs, you also create a target group and listener and associate them to with ELB immediately afterward. This AWS Tutorial covers the steps: [Create an Application Load Balancer Using the AWS CLI
+](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html)  The balancer tool automates the process with your custom pre-configured settings.
 
 ## Usage
 
 Quick start to creating and destroying a load balancer.
 
     cd project
-    balancer init --vpc-id vpc-123 --subnets subnet-123 subnet-456 --security-groups sg-123
+    balancer init --vpc-id vpc-123 --subnets subnet-123 subnet-456 --security-groups sg-123 # generates a default profile file
     # edit .balancer/profiles/default.yml to fit your needs
     balancer create my-elb
     balancer destroy my-elb
@@ -41,19 +43,20 @@ create_listener:
 
 ### Security Groups
 
-Balancer automatically creates a security group with the same name as the elb and opens up the port configured on the listener.  To disable this behavior, use the `--no-security-group` optional.  If you use this option, you must specify you own security group in the profile file, since at least 1 security group is required.  By default, the security group opens up `0.0.0.0/0`. If you want to override this use `--sg-cdir`, example:
+Balancer automatically creates a security group with the same name as the elb and opens up the port configured on the listener in your profile.  To disable the creation of a security group, use the `--no-security-group` optional.  If you use this option, you must specify your own security group in the profile file, since at least one security group is required by the create_load_balancer api method.
 
-	balancer create my-elb --sg-cdir 10.0.0.0/16
+By default, the security group opens up `0.0.0.0/0`. If you want to override this use `--sg-cdir`, example:
+
+    balancer create my-elb --sg-cdir 10.0.0.0/16
 
 When you destroy the ELB like so:
 
-	balancer destroy my-elb
+    balancer destroy my-elb
 
-Balancer also attempts to destroy the security group if:
+Balancer also will destroy the security group if:
 
-* The security group is tagged with the `balancer=my-elb` tag. Balancer automatically adds this tag when creating the ELB.
+* The security group is tagged with the `balancer=my-elb` tag. Balancer automatically adds this tag to the security group when creating the ELB.
 * There are no dependencies on the security group. If there are dependencies the ELB is deleted but the security group is left behind for you to clean up.
-
 
 ## Installation
 
