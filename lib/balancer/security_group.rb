@@ -10,7 +10,12 @@ module Balancer
         puts "Creating security group #{@name} in vpc #{sg_vpc_id}"
         params = {group_name: @name, description: @name, vpc_id: sg_vpc_id}
         aws_cli_command("aws ec2 create-security-group", params)
-        resp = ec2.create_security_group(params)
+        begin
+          resp = ec2.create_security_group(params)
+        rescue Aws::EC2::Errors::InvalidVpcIDNotFound => e
+          puts "ERROR: #{e.class} #{e.message}".colorize(:red)
+          exit 1
+        end
         group_id = resp.group_id
         puts "Created security group: #{group_id}"
       end
