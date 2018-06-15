@@ -85,18 +85,19 @@ module Balancer
       params = {group_id: sg.group_id}
       aws_cli_command("aws ec2 delete-security-group", params)
 
-      tries = 0
+      retries = 0
       begin
         ec2.delete_security_group(params)
         puts "Deleted security group: #{sg.group_id}"
       rescue Aws::EC2::Errors::DependencyViolation => e
-        if tries == 0
+        if retries == 0
           puts "WARN: #{e.class} #{e.message}"
-          puts "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again a few times."
+          puts "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again."
         end
-        sleep 2**tries
-        tries += 1
-        if tries <= 5
+        sleep 2**retries
+        retries += 1
+        puts "Retries: #{retries}"
+        if retries <= 6
           # retry because it takes some time for the load balancer to be deleted
           # and that can cause a DependencyViolation exception
           retry
