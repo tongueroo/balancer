@@ -6,6 +6,7 @@ module Balancer
     include AwsService
     include SecurityGroup
 
+    attr_reader :target_group_arn
     def initialize(options)
       @options = options
       @name = options[:name]
@@ -18,9 +19,10 @@ module Balancer
         return
       end
 
-      if elb_exists?
-        puts "Load balancer #{@name} already exists"
-        return
+      if load_balancer_arn = elb_exists? # intentional assignemt
+        puts "Load balancer #{@name} already exists: #{load_balancer_arn}"
+        # ensure that target_group_arn is set for ufo
+        @target_group_arn = find_target_group(load_balancer_arn).target_group_arn
       end
 
       @security_group_id = create_security_group
@@ -32,11 +34,22 @@ module Balancer
     def elb_exists?
       begin
         resp = elb.describe_load_balancers(names: [@name])
-        true
+        resp.load_balancers.first.load_balancer_arn
       rescue Aws::ElasticLoadBalancingV2::Errors::LoadBalancerNotFound
         false
       end
     end
+
+    # looks for existing target group arn associate with load balancer created
+    # by ufo
+    def find_target_group(load_balancer_arn)
+      resp = elb.describe_target_groups(load_balancer_arn: load_balancer_arn)
+      # assume first target group is one we want
+      # TODO: add logic to look for target group with ufo tag
+      # and then fall back to the first target group
+      resp.target_groups.first
+    end
+    memoize :find_target_group
 
     def create_elb
       puts "Creating load balancer with params:"
@@ -64,6 +77,8 @@ module Balancer
     def create_target_group
       puts "Creating target group with params:"
       params = param.create_target_group
+      # override the target group name, takes higher precedence of profile file
+      params[:name] = @options[:target_group_name] if @options[:target_group_name]
       pretty_display(params)
       aws_cli_command("aws elbv2 create-target-group", params)
 

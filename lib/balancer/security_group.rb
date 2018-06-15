@@ -33,6 +33,11 @@ module Balancer
       group_id
     end
 
+    # --sg-cidr option takes highest precedence
+    def security_group_cidr
+      @options[:sg_cidr] || param.settings["security_group"]["cidr"]
+    end
+
     def authorize_elb_port(group_id)
       resp = ec2.describe_security_groups(group_ids: [group_id])
       sg = resp.security_groups.first
@@ -40,7 +45,7 @@ module Balancer
       already_authorized = sg.ip_permissions.find do |perm|
         perm.from_port == 80 &&
         perm.to_port == 80
-        perm.ip_ranges.find { |ip_range| ip_range.cidr_ip == @options[:sg_cidr] }
+        perm.ip_ranges.find { |ip_range| ip_range.cidr_ip == security_group_cidr }
       end
       if already_authorized
         return
@@ -49,7 +54,7 @@ module Balancer
       listener_port = param.create_listener[:port]
 
       # authorize the matching port in the create_listener setting
-      params = {group_id: group_id, protocol: "tcp", port: listener_port, cidr: @options[:sg_cidr]}
+      params = {group_id: group_id, protocol: "tcp", port: listener_port, cidr: security_group_cidr}
       puts "Authorizing listening port for security group"
       aws_cli_command("aws ec2 authorize-security-group-ingress", params)
       ec2.authorize_security_group_ingress(
@@ -59,7 +64,7 @@ module Balancer
           to_port: listener_port,
           ip_protocol: "tcp",
           ip_ranges: [
-            cidr_ip: @options[:sg_cidr],
+            cidr_ip: security_group_cidr,
             description: "balancer #{@name}"
           ]
         ]
@@ -85,9 +90,13 @@ module Balancer
         ec2.delete_security_group(params)
         puts "Deleted security group: #{sg.group_id}"
       rescue Aws::EC2::Errors::DependencyViolation => e
+        if tries == 0
+          puts "WARN: #{e.class} #{e.message}"
+          puts "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again a few times."
+        end
         sleep 2**tries
         tries += 1
-        if tries <= 4
+        if tries <= 5
           # retry because it takes some time for the load balancer to be deleted
           # and that can cause a DependencyViolation exception
           retry
@@ -106,7 +115,7 @@ module Balancer
 
     def find_security_group(name)
       resp = ec2.describe_security_groups(filters: [
-        {name: "group-name", values: ["my-elb"]},
+        {name: "group-name", values: [name]},
         {name: "vpc-id", values: [sg_vpc_id]},
       ])
       resp.security_groups.first

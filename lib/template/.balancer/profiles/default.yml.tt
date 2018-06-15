@@ -16,6 +16,9 @@ create_target_group:
   # name: ... # automatically named, matches the load balancer name. override here
   protocol: HTTP # required
   port: 80 # required
+  # target_type: ip # network or ip, must be ip if ecs network is awsvpc
 create_listener:
   protocol: HTTP # required
   port: 80 # required
+security_group: # can be overriden by --sg-cidr option
+  cidr: "0.0.0.0/0"

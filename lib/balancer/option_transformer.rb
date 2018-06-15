@@ -25,6 +25,7 @@ module Balancer
           params << key_to_cli_option(k) + ' ' + list
         else
           puts "v.class: #{v.class.inspect}"
+          pp options
           raise "the roof"
         end
       end

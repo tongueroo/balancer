@@ -9,10 +9,10 @@ module Balancer
     # So if in a project with ufo, and it has a .ufo/balancer folder
     # that will be picked up as the default root automatically
     def root
-      default_path = if Dir.glob(".ufo/balancer/profiles/*").empty?
+      default_path = if Dir.glob(".ufo/.balancer/profiles/*").empty?
                        '.'
                      else
-                       '.ufo/balancer'
+                       '.ufo'
                      end
       path = ENV['BALANCER_ROOT'] || default_path
       Pathname.new(path)
