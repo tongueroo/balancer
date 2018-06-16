@@ -12,25 +12,20 @@ module Balancer
       "#{@options[:name]}-elb"
     end
 
+    def say(text)
+      puts text unless @options[:mute]
+    end
+
     def create
-      sg = find_security_group(security_group_name)
-      group_id = sg.group_id if sg
-
-      unless group_id
-        puts "Creating security group #{security_group_name} in vpc #{sg_vpc_id}"
-        params = {group_name: security_group_name, description: security_group_name, vpc_id: sg_vpc_id}
-        aws_cli_command("aws ec2 create-security-group", params)
-        begin
-          resp = ec2.create_security_group(params)
-        rescue Aws::EC2::Errors::InvalidVpcIDNotFound => e
-          puts "ERROR: #{e.class} #{e.message}".colorize(:red)
-          exit 1
-        end
-        group_id = resp.group_id
-        puts "Created security group: #{group_id}"
-      end
-
-      authorize_elb_port(group_id)
+      group_id = create_security_group(security_group_name)
+      port = param.create_listener[:port]
+      # --sg-cidr option takes highest precedence
+      ip_range = @options[:sg_cidr] || param.settings[:security_group][:cidr]
+      authorize_port(
+        group_id: group_id,
+        from_port: port,
+        to_port: port,
+        ip_range: ip_range)
 
       ec2.create_tags(resources: [group_id], tags: [{
         key: "Name",
@@ -43,69 +38,110 @@ module Balancer
       group_id
     end
 
-    # --sg-cidr option takes highest precedence
-    def security_group_cidr
-      @options[:sg_cidr] || param.settings[:security_group][:cidr]
+    def create_security_group(security_group_name)
+      sg = find_security_group(security_group_name)
+      group_id = sg.group_id if sg
+
+      unless group_id
+        say "Creating security group #{security_group_name} in vpc #{sg_vpc_id}"
+        params = {group_name: security_group_name, description: security_group_name, vpc_id: sg_vpc_id}
+        aws_cli_command("aws ec2 create-security-group", params)
+        begin
+          resp = ec2.create_security_group(params)
+        rescue Aws::EC2::Errors::InvalidVpcIDNotFound => e
+          say "ERROR: #{e.class} #{e.message}".colorize(:red)
+          exit 1
+        end
+        group_id = resp.group_id
+        say "Created security group: #{group_id}"
+      end
+      group_id
     end
 
-    def authorize_elb_port(group_id)
+    def authorize_port(group_id:, from_port:, to_port:, ip_range:nil, groups:nil)
       resp = ec2.describe_security_groups(group_ids: [group_id])
       sg = resp.security_groups.first
 
-      already_authorized = sg.ip_permissions.find do |perm|
-        perm.from_port == 80 &&
-        perm.to_port == 80
-        perm.ip_ranges.find { |ip_range| ip_range.cidr_ip == security_group_cidr }
-      end
-      if already_authorized
-        return
-      end
-
-      listener_port = param.create_listener[:port]
-
       # authorize the matching port in the create_listener setting
-      params = {group_id: group_id, protocol: "tcp", port: listener_port, cidr: security_group_cidr}
-      puts "Authorizing listening port for security group"
+      params = {
+        group_id: group_id,
+        protocol: "tcp",
+        from_port: from_port,
+        to_port: to_port,
+      }
+      say "Authorizing listening port for security group"
       aws_cli_command("aws ec2 authorize-security-group-ingress", params)
-      ec2.authorize_security_group_ingress(
-        group_id: params[:group_id],
-        ip_permissions: [
-          from_port: listener_port,
-          to_port: listener_port,
-          ip_protocol: "tcp",
-          ip_ranges: [
-            cidr_ip: security_group_cidr,
-            description: "balancer #{security_group_name}"
-          ]
+
+      permission = {
+        from_port: from_port,
+        to_port: from_port,
+        ip_protocol: "tcp"
+      }
+      if ip_range
+        permission[:ip_ranges] = [
+          cidr_ip: ip_range,
+          description: "balancer #{security_group_name}"
         ]
-      )
+      else
+        permission[:user_id_group_pairs] = [
+          {
+            # description: "String",
+            group_id: groups,
+            # group_name: "String",
+            # peering_status: "String",
+            # user_id: "String",
+            # vpc_id: "String",
+            # vpc_peering_connection_id: "String",
+          }
+        ]
+
+        # permission[:groups] = [groups].flatten.map { |g| { group_id: g } }
+      end
+
+      final_params = {
+        group_id: params[:group_id],
+        ip_permissions: [permission]
+      }
+      # if groups
+      #   final_params.delete(:group_id)
+      # end
+      puts "final_params"
+      pp final_params
+      begin
+        ec2.authorize_security_group_ingress(final_params)
+      rescue Aws::EC2::Errors::InvalidPermissionDuplicate
+        # silently fail
+      end
     end
 
     def destroy
       sg = find_security_group(security_group_name)
       return unless sg
 
-      balancer_tag = sg.tags.find { |t| t.key == "balancer" && t.value == security_group_name }
+      balancer_tag = sg.tags.find do |t|
+        t.key == "balancer" && t.value == security_group_name ||
+        t.key == "ufo" && t.value == security_group_name
+      end
       unless balancer_tag
-        puts "WARN: not destroying the #{security_group_name} security group because it doesn't have a matching balancer tag".colorize(:yellow)
+        say "WARN: not destroying the #{security_group_name} security group because it doesn't have a matching balancer tag".colorize(:yellow)
         return
       end
 
-      puts "Deleting security group #{security_group_name} in vpc #{sg_vpc_id}"
+      say "Deleting security group #{security_group_name} in vpc #{sg_vpc_id}"
       params = {group_id: sg.group_id}
       aws_cli_command("aws ec2 delete-security-group", params)
 
       retries = 0
       begin
         ec2.delete_security_group(params)
-        puts "Deleted security group: #{sg.group_id}"
+        say "Deleted security group: #{sg.group_id}"
       rescue Aws::EC2::Errors::DependencyViolation => e
         if retries == 0
-          puts "WARN: #{e.class} #{e.message}"
-          puts "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again."
+          say "WARN: #{e.class} #{e.message}"
+          say "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again."
         end
         seconds = 2**retries
-        puts "Retry: #{retries+1} Delay: #{seconds}s"
+        say "Retry: #{retries+1} Delay: #{seconds}s"
         sleep seconds
         retries += 1
         if retries <= 6
@@ -113,8 +149,8 @@ module Balancer
           # and that can cause a DependencyViolation exception
           retry
         else
-          puts "WARN: #{e.class} #{e.message}".colorize(:yellow)
-          puts "Unable to delete the security group because it's still in use by another resource. Leaving the security group."
+          say "WARN: #{e.class} #{e.message}".colorize(:yellow)
+          say "Unable to delete the security group because it's still in use by another resource. Leaving the security group."
           end
       end
     end
