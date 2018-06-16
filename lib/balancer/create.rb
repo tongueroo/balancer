@@ -19,19 +19,21 @@ module Balancer
         return
       end
 
-      if load_balancer_arn = elb_exists? # intentional assignemt
+      load_balancer_arn = existing_target_group_arn
+      if load_balancer_arn
         puts "Load balancer #{@name} already exists: #{load_balancer_arn}"
         # ensure that target_group_arn is set for ufo
-        @target_group_arn = find_target_group(load_balancer_arn).target_group_arn
+        @target_group_arn = find_target_group.target_group_arn
       end
 
       @security_group_id = create_security_group
       create_elb
       create_target_group
+      modify_target_group_attributes
       create_listener
     end
 
-    def elb_exists?
+    def existing_target_group_arn
       begin
         resp = elb.describe_load_balancers(names: [@name])
         resp.load_balancers.first.load_balancer_arn
@@ -42,8 +44,8 @@ module Balancer
 
     # looks for existing target group arn associate with load balancer created
     # by ufo
-    def find_target_group(load_balancer_arn)
-      resp = elb.describe_target_groups(load_balancer_arn: load_balancer_arn)
+    def find_target_group
+      resp = elb.describe_target_groups(names: [@name])
       # assume first target group is one we want
       # TODO: add logic to look for target group with ufo tag
       # and then fall back to the first target group
@@ -92,6 +94,15 @@ module Balancer
       puts "Target group created: #{target_group.target_group_arn}"
       @target_group_arn = target_group.target_group_arn # used later
       add_tags(@target_group_arn)
+      puts
+    end
+
+    def modify_target_group_attributes
+      params = param.modify_target_group_attributes
+      params[:target_group_arn] = @target_group_arn
+      pretty_display(params)
+      aws_cli_command("aws elbv2 modify-target-group-attributes", params)
+      elb.modify_target_group_attributes(params)
       puts
     end
 

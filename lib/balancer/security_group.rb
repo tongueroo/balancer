@@ -2,13 +2,17 @@ module Balancer
   module SecurityGroup
     extend Memoist
 
+    def security_group_name
+      "#{@name}-elb"
+    end
+
     def create_security_group
-      sg = find_security_group(@name)
+      sg = find_security_group(security_group_name)
       group_id = sg.group_id if sg
 
       unless group_id
-        puts "Creating security group #{@name} in vpc #{sg_vpc_id}"
-        params = {group_name: @name, description: @name, vpc_id: sg_vpc_id}
+        puts "Creating security group #{security_group_name} in vpc #{sg_vpc_id}"
+        params = {group_name: security_group_name, description: security_group_name, vpc_id: sg_vpc_id}
         aws_cli_command("aws ec2 create-security-group", params)
         begin
           resp = ec2.create_security_group(params)
@@ -24,10 +28,10 @@ module Balancer
 
       ec2.create_tags(resources: [group_id], tags: [{
         key: "Name",
-        value: @name
+        value: security_group_name
       },
         key: "balancer",
-        value: @name
+        value: security_group_name
       ])
 
       group_id
@@ -35,7 +39,7 @@ module Balancer
 
     # --sg-cidr option takes highest precedence
     def security_group_cidr
-      @options[:sg_cidr] || param.settings["security_group"]["cidr"]
+      @options[:sg_cidr] || param.settings[:security_group][:cidr]
     end
 
     def authorize_elb_port(group_id)
@@ -65,23 +69,23 @@ module Balancer
           ip_protocol: "tcp",
           ip_ranges: [
             cidr_ip: security_group_cidr,
-            description: "balancer #{@name}"
+            description: "balancer #{security_group_name}"
           ]
         ]
       )
     end
 
     def destroy_security_group
-      sg = find_security_group(@name)
+      sg = find_security_group(security_group_name)
       return unless sg
 
-      balancer_tag = sg.tags.find { |t| t.key == "balancer" && t.value == @name }
+      balancer_tag = sg.tags.find { |t| t.key == "balancer" && t.value == security_group_name }
       unless balancer_tag
-        puts "WARN: not destroying the #{@name} security group because it doesn't have a matching balancer tag".colorize(:yellow)
+        puts "WARN: not destroying the #{security_group_name} security group because it doesn't have a matching balancer tag".colorize(:yellow)
         return
       end
 
-      puts "Deleting security group #{@name} in vpc #{sg_vpc_id}"
+      puts "Deleting security group #{security_group_name} in vpc #{sg_vpc_id}"
       params = {group_id: sg.group_id}
       aws_cli_command("aws ec2 delete-security-group", params)
 
@@ -94,9 +98,10 @@ module Balancer
           puts "WARN: #{e.class} #{e.message}"
           puts "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again."
         end
-        sleep 2**retries
+        seconds = 2**retries
+        puts "Retry: #{retries+1} Delay: #{seconds}s"
+        sleep seconds
         retries += 1
-        puts "Retries: #{retries}"
         if retries <= 6
           # retry because it takes some time for the load balancer to be deleted
           # and that can cause a DependencyViolation exception

@@ -16,9 +16,9 @@ module Balancer
       [
         [:force, type: :boolean, desc: "Bypass overwrite are you sure prompt for existing files."],
         [:git, type: :boolean, default: true, desc: "Git initialize the project"],
-        [:subnets, type: :array, default: ["REPLACE_ME"], desc: "Subnets"],
-        [:security_groups, type: :array, default: ["REPLACE_ME"], desc: "Security groups"],
-        [:vpc_id, default: "REPLACE_ME", desc: "Vpc id"],
+        [:subnets, type: :array, default: [], desc: "Subnets"],
+        [:security_groups, type: :array, default: [], desc: "Security groups"],
+        [:vpc_id, desc: "Vpc id"],
       ]
     end
 
@@ -28,6 +28,13 @@ module Balancer
 
     def self.source_root
       File.expand_path("../template", File.dirname(__FILE__))
+    end
+
+    def set_network_options
+      network = Network.new(@options[:vpc_id])
+      @options = @options.dup
+      @options[:vpc_id] = network.vpc_id
+      @options[:subnets] = network.subnet_ids
     end
 
     def init_project

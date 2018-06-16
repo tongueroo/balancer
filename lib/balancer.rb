@@ -20,6 +20,7 @@ module Balancer
   autoload :Param, "balancer/param"
   autoload :OptionTransformer, "balancer/option_transformer"
   autoload :SecurityGroup, "balancer/security_group"
+  autoload :Network, "balancer/network"
 
   extend Core
 end

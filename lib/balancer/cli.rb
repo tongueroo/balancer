@@ -9,7 +9,7 @@ module Balancer
     option :subnets, type: :array, desc: "Subnets"
     option :security_groups, type: :array, desc: "Security groups"
     # create_target_group options
-    option :vpc_id, type: :array, desc: "Vpc id"
+    option :vpc_id, desc: "Vpc id"
     option :target_group_name, desc: "Optionally target group name."
     # security_group options
     option :sg_cidr, default: "0.0.0.0/0", desc: "Security group cidr range"
