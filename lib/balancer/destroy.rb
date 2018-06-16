@@ -10,14 +10,19 @@ module Balancer
     end
 
     def run
+      destroy_load_balancer
+      security_group.destroy
+    end
+
+    def destroy_load_balancer
       puts "Destroying ELB '#{@name}' and associated resources."
       return if @options[:noop]
 
       begin
         resp = elb.describe_load_balancers(names: [@name])
       rescue Aws::ElasticLoadBalancingV2::Errors::LoadBalancerNotFound
-        puts "Load balancer '#{@name}' not found. Exiting.".colorize(:red)
-        exit 1
+        puts "Load balancer '#{@name}' not found. Not destroying.".colorize(:red)
+        return
       end
 
       load_balancer = resp.load_balancers.first
@@ -44,8 +49,6 @@ module Balancer
         load_balancer_arn: load_balancer.load_balancer_arn,
       )
       puts "Deleted load balancer: #{load_balancer.load_balancer_arn}"
-
-      security_group.destroy
     end
   end
 end

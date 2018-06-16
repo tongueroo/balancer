@@ -19,6 +19,17 @@ module Balancer
     end
     memoize :root
 
+    # Only set the BALANCER_PROFILE if not set already at the CLI. CLI takes
+    # highest precedence.
+    def set_profile(value)
+      path = "#{root}/.balancer/profiles/#{value}.yml"
+      unless File.exist?(path)
+        puts "The profile file #{path} does not exist.  Exiting.".colorize(:red)
+        exit 1
+      end
+      ENV['BALANCER_PROFILE'] = value
+    end
+
     def profile
       ENV['BALANCER_PROFILE'] || 'default'
     end
