@@ -58,7 +58,7 @@ module Balancer
       group_id
     end
 
-    def authorize_port(group_id:, from_port:, to_port:, ip_range:nil, groups:nil)
+    def authorize_port(group_id:, from_port:, to_port:, ip_range:nil, groups:nil, description:nil)
       resp = ec2.describe_security_groups(group_ids: [group_id])
       sg = resp.security_groups.first
 
@@ -74,7 +74,7 @@ module Balancer
 
       permission = {
         from_port: from_port,
-        to_port: from_port,
+        to_port: to_port,
         ip_protocol: "tcp"
       }
       if ip_range
@@ -85,7 +85,7 @@ module Balancer
       else
         permission[:user_id_group_pairs] = [
           {
-            # description: "String",
+            description: "ufo elb access",
             group_id: groups,
             # group_name: "String",
             # peering_status: "String",
@@ -94,17 +94,12 @@ module Balancer
             # vpc_peering_connection_id: "String",
           }
         ]
-
-        # permission[:groups] = [groups].flatten.map { |g| { group_id: g } }
       end
 
       final_params = {
         group_id: params[:group_id],
         ip_permissions: [permission]
       }
-      # if groups
-      #   final_params.delete(:group_id)
-      # end
       puts "final_params"
       pp final_params
       begin
@@ -144,7 +139,7 @@ module Balancer
         say "Retry: #{retries+1} Delay: #{seconds}s"
         sleep seconds
         retries += 1
-        if retries <= 6
+        if retries <= 5
           # retry because it takes some time for the load balancer to be deleted
           # and that can cause a DependencyViolation exception
           retry
