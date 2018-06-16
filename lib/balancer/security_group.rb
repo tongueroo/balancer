@@ -142,7 +142,7 @@ module Balancer
           # and that can cause a DependencyViolation exception
           retry
         else
-          say "WARN: #{e.class} #{e.message}".colorize(:yellow)
+          say "WARN: #{e.class} #{e.message}"
           say "Unable to delete the security group because it's still in use by another resource. Leaving the security group: #{sg.group_id}"
           end
       end
