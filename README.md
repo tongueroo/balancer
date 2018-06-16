@@ -43,7 +43,7 @@ create_listener:
 
 ### Security Groups
 
-Balancer automatically creates a security group with the same name as the elb and opens up the port configured on the listener in your profile.  To disable the creation of a security group, use the `--no-security-group` optional.  If you use this option, you must specify your own security group in the profile file, since at least one security group is required by the create_load_balancer api method.
+Balancer automatically creates a security group with the same name as the elb and opens up the port configured on the listener the profile file.  If you'll rather not using the automatically created security group set the security_groups in the profile file.
 
 By default, the security group opens up `0.0.0.0/0`. If you want to override this use `--sg-cdir`, example:
 
@@ -56,7 +56,7 @@ When you destroy the ELB like so:
 Balancer also will destroy the security group if:
 
 * The security group is tagged with the `balancer=my-elb` tag. Balancer automatically adds this tag to the security group when creating the ELB.
-* There are no dependencies on the security group. If there are dependencies the ELB is deleted but the security group is left behind for you to clean up.
+* There are no resources dependent on the security group. If there are dependencies the ELB is deleted but the security group is left behind for you to clean up.
 
 ## Installation
 

@@ -100,8 +100,6 @@ module Balancer
         group_id: params[:group_id],
         ip_permissions: [permission]
       }
-      puts "final_params"
-      pp final_params
       begin
         ec2.authorize_security_group_ingress(final_params)
       rescue Aws::EC2::Errors::InvalidPermissionDuplicate
@@ -145,7 +143,7 @@ module Balancer
           retry
         else
           say "WARN: #{e.class} #{e.message}".colorize(:yellow)
-          say "Unable to delete the security group because it's still in use by another resource. Leaving the security group."
+          say "Unable to delete the security group because it's still in use by another resource. Leaving the security group: #{sg.group_id}"
           end
       end
     end

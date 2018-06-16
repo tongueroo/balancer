@@ -10,7 +10,7 @@ module Balancer
     end
 
     def run
-      puts "Destroying ELB and target groups associated with: #{@name}"
+      puts "Destroying ELB '#{@name}' and associated resources."
       return if @options[:noop]
 
       begin
