@@ -1,12 +1,18 @@
 module Balancer
-  module SecurityGroup
+  class SecurityGroup
     extend Memoist
+    include AwsService
+    include Common
 
-    def security_group_name
-      "#{@name}-elb"
+    def initialize(options)
+      @options = options
     end
 
-    def create_security_group
+    def security_group_name
+      "#{@options[:name]}-elb"
+    end
+
+    def create
       sg = find_security_group(security_group_name)
       group_id = sg.group_id if sg
 
@@ -75,7 +81,7 @@ module Balancer
       )
     end
 
-    def destroy_security_group
+    def destroy
       sg = find_security_group(security_group_name)
       return unless sg
 
@@ -127,28 +133,5 @@ module Balancer
       resp.security_groups.first
     end
     memoize :find_security_group
-
-    # Few other common methods also included here
-
-    def param
-      Param.new(@options)
-    end
-    memoize :param
-
-    def pretty_display(data)
-      data = data.deep_stringify_keys
-      puts YAML.dump(data)
-    end
-
-    def option_transformer
-      Balancer::OptionTransformer.new
-    end
-    memoize :option_transformer
-
-    def aws_cli_command(aws_command, params)
-      # puts "Equivalent aws cli command:"
-      cli_options = option_transformer.to_cli(params)
-      puts "  #{aws_command} #{cli_options}".colorize(:light_blue)
-    end
   end
 end

@@ -4,7 +4,7 @@ module Balancer
   class Create
     extend Memoist
     include AwsService
-    include SecurityGroup
+    include Common
 
     attr_reader :target_group_arn
     def initialize(options)
@@ -26,7 +26,7 @@ module Balancer
         @target_group_arn = find_target_group.target_group_arn
       end
 
-      @security_group_id = create_security_group
+      @security_group_id = security_group.create
       create_elb
       create_target_group
       modify_target_group_attributes

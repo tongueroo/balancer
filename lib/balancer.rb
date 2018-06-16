@@ -21,6 +21,7 @@ module Balancer
   autoload :OptionTransformer, "balancer/option_transformer"
   autoload :SecurityGroup, "balancer/security_group"
   autoload :Network, "balancer/network"
+  autoload :Common, "balancer/common"
 
   extend Core
 end
