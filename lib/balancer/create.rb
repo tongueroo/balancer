@@ -66,7 +66,7 @@ module Balancer
       begin
         resp = elb.create_load_balancer(params)
       rescue Exception => e
-        say "ERROR: #{e.class}: #{e.message}".colorize(:red)
+        puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
         exit 1
       end
 
@@ -87,7 +87,7 @@ module Balancer
       begin
         resp = elb.create_target_group(params)
       rescue Exception => e
-        say "ERROR: #{e.class}: #{e.message}".colorize(:red)
+        puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
         exit 1
       end
       target_group = resp.target_groups.first
@@ -127,7 +127,7 @@ module Balancer
     def run_with_error_handling
       yield
     rescue Exception => e
-      say "ERROR: #{e.class}: #{e.message}".colorize(:red)
+      puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
       exit 1
     end
 
