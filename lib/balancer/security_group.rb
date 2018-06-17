@@ -12,10 +12,6 @@ module Balancer
       "#{@options[:name]}-elb"
     end
 
-    def say(text)
-      puts text unless @options[:mute]
-    end
-
     def create
       group_id = create_security_group(security_group_name)
       port = param.create_listener[:port]
@@ -43,7 +39,7 @@ module Balancer
       group_id = sg.group_id if sg
 
       unless group_id
-        say "Creating security group #{security_group_name} in vpc #{sg_vpc_id}"
+        say "Creating security group #{security_group_name} in #{sg_vpc_id}"
         params = {group_name: security_group_name, description: security_group_name, vpc_id: sg_vpc_id}
         aws_cli_command("aws ec2 create-security-group", params)
         begin
@@ -120,7 +116,7 @@ module Balancer
         return
       end
 
-      say "Deleting security group #{security_group_name} in vpc #{sg_vpc_id}"
+      say "Deleting security group #{security_group_name} in #{sg_vpc_id}"
       retries = 0
       begin
         ec2.delete_security_group(group_id: sg.group_id)
