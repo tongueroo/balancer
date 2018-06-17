@@ -2,6 +2,7 @@ $:.unshift(File.expand_path("../", __FILE__))
 require "balancer/version"
 require "colorize"
 require "memoist"
+require "logger"
 
 module Balancer
   autoload :AwsService, "balancer/aws_service"

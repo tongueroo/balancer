@@ -8,7 +8,7 @@ module Balancer
 
     def logger
       logger = Logger.new($stdout)
-      logger.level = Balancer.log_level
+      logger.level = Kernel.const_get("Logger::#{Balancer.log_level.upcase}")
       # https://stackoverflow.com/questions/14382252/how-to-format-ruby-logger
       logger.formatter = proc do |severity, datetime, progname, msg|
         "#{msg}\n"

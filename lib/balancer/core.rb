@@ -53,12 +53,12 @@ module Balancer
     # WARN - A warning.
     # INFO - Generic (useful) information about system operation.
     # DEBUG - Low-level information for developers.
-    @@log_level = Logger::INFO
+    @@log_level = :info
     def log_level ; @@log_level ; end
 
     # Balancer.log_level = :warn
     def log_level=(v)
-      @@log_level = const_get("Logger::#{v.upcase}")
+      @@log_level = v
     end
   end
 end
