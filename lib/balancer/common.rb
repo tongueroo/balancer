@@ -2,6 +2,21 @@ module Balancer
   module Common
     extend Memoist
 
+    def say(text=nil)
+      logger.info(text)
+    end
+
+    def logger
+      logger = Logger.new($stdout)
+      logger.level = Balancer.log_level
+      # https://stackoverflow.com/questions/14382252/how-to-format-ruby-logger
+      logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{msg}\n"
+      end
+      logger
+    end
+    memoize :logger
+
     def security_group
       SecurityGroup.new(@options)
     end
@@ -14,7 +29,7 @@ module Balancer
 
     def pretty_display(data)
       data = data.deep_stringify_keys
-      puts YAML.dump(data)
+      say YAML.dump(data)
     end
 
     def option_transformer
@@ -23,9 +38,8 @@ module Balancer
     memoize :option_transformer
 
     def aws_cli_command(aws_command, params)
-      # puts "Equivalent aws cli command:"
       cli_options = option_transformer.to_cli(params)
-      puts "  #{aws_command} #{cli_options}".colorize(:light_blue)
+      say "  #{aws_command} #{cli_options}".colorize(:light_blue)
     end
   end
 end

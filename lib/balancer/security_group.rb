@@ -121,30 +121,29 @@ module Balancer
       end
 
       say "Deleting security group #{security_group_name} in vpc #{sg_vpc_id}"
-      params = {group_id: sg.group_id}
-      aws_cli_command("aws ec2 delete-security-group", params)
-
       retries = 0
       begin
-        ec2.delete_security_group(params)
+        ec2.delete_security_group(group_id: sg.group_id)
         say "Deleted security group: #{sg.group_id}"
       rescue Aws::EC2::Errors::DependencyViolation => e
-        if retries == 0
-          say "WARN: #{e.class} #{e.message}"
-          say "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again."
-        end
-        seconds = 2**retries
-        say "Retry: #{retries+1} Delay: #{seconds}s"
-        sleep seconds
+        # retry because it takes some time for the load balancer to be deleted
+        # and that can cause a DependencyViolation exception
         retries += 1
         if retries <= 5
-          # retry because it takes some time for the load balancer to be deleted
-          # and that can cause a DependencyViolation exception
+          if retries == 1
+            say "WARN: #{e.class} #{e.message}"
+            say "Unable to delete the security group because it's still in use by another resource. This might be the ELB which can take a little time to delete. Backing off expondentially and will try to delete again."
+          end
+          seconds = 2**retries
+          say "Retry: #{retries+1} Delay: #{seconds}s"
+          sleep seconds
           retry
         else
           say "WARN: #{e.class} #{e.message}"
-          say "Unable to delete the security group because it's still in use by another resource. Leaving the security group: #{sg.group_id}"
-          end
+          say "Unable to delete the security group because it's still in use by another resource. Leaving the security group behind: #{sg.group_id}"
+        end
+
+
       end
     end
 

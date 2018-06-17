@@ -15,13 +15,13 @@ module Balancer
     # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/tutorial-application-load-balancer-cli.html
     def run
       if ENV['TEST'] # ghetto way to for sanity cli specs
-        puts "Creating load balancer"
+        say "Creating load balancer"
         return
       end
 
       load_balancer_arn = existing_target_group_arn
       if load_balancer_arn
-        puts "Load balancer #{@name} already exists: #{load_balancer_arn}"
+        say "Load balancer #{@name} already exists: #{load_balancer_arn}"
         # ensure that target_group_arn is set for ufo
         @target_group_arn = find_target_group.target_group_arn
       end
@@ -54,7 +54,7 @@ module Balancer
     memoize :find_target_group
 
     def create_elb
-      puts "Creating load balancer with params:"
+      say "Creating load balancer with params:"
       params = param.create_load_balancer
       params[:security_groups] ||= []
       params[:security_groups] += [@security_group_id]
@@ -66,18 +66,18 @@ module Balancer
       begin
         resp = elb.create_load_balancer(params)
       rescue Exception => e
-        puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
+        say "ERROR: #{e.class}: #{e.message}".colorize(:red)
         exit 1
       end
 
       elb = resp.load_balancers.first
-      puts "Load balancer created: #{elb.load_balancer_arn}"
+      say "Load balancer created: #{elb.load_balancer_arn}"
       @load_balancer_arn = elb.load_balancer_arn # used later
-      puts
+      say
     end
 
     def create_target_group
-      puts "Creating target group with params:"
+      say "Creating target group with params:"
       params = param.create_target_group
       # override the target group name, takes higher precedence of profile file
       params[:name] = @options[:target_group_name] if @options[:target_group_name]
@@ -87,14 +87,14 @@ module Balancer
       begin
         resp = elb.create_target_group(params)
       rescue Exception => e
-        puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
+        say "ERROR: #{e.class}: #{e.message}".colorize(:red)
         exit 1
       end
       target_group = resp.target_groups.first
-      puts "Target group created: #{target_group.target_group_arn}"
+      say "Target group created: #{target_group.target_group_arn}"
       @target_group_arn = target_group.target_group_arn # used later
       add_tags(@target_group_arn)
-      puts
+      say
     end
 
     def modify_target_group_attributes
@@ -103,11 +103,11 @@ module Balancer
       pretty_display(params)
       aws_cli_command("aws elbv2 modify-target-group-attributes", params)
       elb.modify_target_group_attributes(params)
-      puts
+      say
     end
 
     def create_listener
-      puts "Creating listener with params:"
+      say "Creating listener with params:"
       params = param.create_listener
       params.merge!(
         load_balancer_arn: @load_balancer_arn,
@@ -120,14 +120,14 @@ module Balancer
         elb.create_listener(params)
       end
       listener = resp.listeners.first
-      puts "Listener created: #{listener.listener_arn}"
-      puts
+      say "Listener created: #{listener.listener_arn}"
+      say
     end
 
     def run_with_error_handling
       yield
     rescue Exception => e
-      puts "ERROR: #{e.class}: #{e.message}".colorize(:red)
+      say "ERROR: #{e.class}: #{e.message}".colorize(:red)
       exit 1
     end
 

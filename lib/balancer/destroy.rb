@@ -15,13 +15,13 @@ module Balancer
     end
 
     def destroy_load_balancer
-      puts "Destroying ELB '#{@name}' and associated resources."
+      say "Destroying ELB '#{@name}' and associated resources."
       return if @options[:noop]
 
       begin
         resp = elb.describe_load_balancers(names: [@name])
       rescue Aws::ElasticLoadBalancingV2::Errors::LoadBalancerNotFound
-        puts "Load balancer '#{@name}' not found. Not destroying.".colorize(:red)
+        say "Load balancer '#{@name}' not found. Not destroying.".colorize(:red)
         return
       end
 
@@ -37,18 +37,18 @@ module Balancer
 
       listeners.each do |listener|
         elb.delete_listener(listener_arn: listener.listener_arn)
-        puts "Deleted listener: #{listener.listener_arn}"
+        say "Deleted listener: #{listener.listener_arn}"
       end
 
       groups.each do |group|
         elb.delete_target_group(target_group_arn: group.target_group_arn)
-        puts "Deleted target group: #{group.target_group_arn}"
+        say "Deleted target group: #{group.target_group_arn}"
       end
 
       resp = elb.delete_load_balancer(
         load_balancer_arn: load_balancer.load_balancer_arn,
       )
-      puts "Deleted load balancer: #{load_balancer.load_balancer_arn}"
+      say "Deleted load balancer: #{load_balancer.load_balancer_arn}"
     end
   end
 end

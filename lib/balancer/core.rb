@@ -44,5 +44,21 @@ module Balancer
         exit
       end
     end
+
+    # https://ruby-doc.org/stdlib-2.1.0/libdoc/logger/rdoc/Logger.html
+    #
+    # UNKNOWN - An unknown message that should always be logged.
+    # FATAL - An unhandleable error that results in a program crash.
+    # ERROR - A handleable error condition.
+    # WARN - A warning.
+    # INFO - Generic (useful) information about system operation.
+    # DEBUG - Low-level information for developers.
+    @@log_level = Logger::INFO
+    def log_level ; @@log_level ; end
+
+    # Balancer.log_level = :warn
+    def log_level=(v)
+      @@log_level = const_get("Logger::#{v.upcase}")
+    end
   end
 end
